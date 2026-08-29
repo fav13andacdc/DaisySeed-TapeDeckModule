@@ -1,3 +1,39 @@
+## 🎛️ Custom Firmware: Tape Saturation & Through-Zero Doubletracker
+
+**This fork transforms the Terrarium into a dual-sided tape emulator, featuring mastering-grade analog saturation on Side 1 and a mechanical through-zero flanger/chorus/echo on Side 2.**
+
+### What This Is
+This is a custom firmware build for the PedalPCB Terrarium (Daisy Seed), originally based on bkshepherd's Multi-Effect Guitar Pedal framework. It overrides the standard multi-effect list to boot directly into a bespoke `TapeDeckModule`. It also detaches the global hardware bypass relay, allowing both physical footswitches to operate completely independently to toggle the two halves of the effect.
+
+### Under the Hood (The Changes Made)
+*   **Jiles-Atherton Hysteresis:** Side 1 replaces standard clipping with a discrete-time approximation of the Jiles-Atherton magnetisation model, creating authentic, frequency-dependent analog tape warmth and compression.
+*   **Auto Level Control (ALC):** A secondary "Cassette" voice routes the signal through a fast-attack/slow-release compressor before hitting the saturation block to simulate cheap, highly squashed cassette recorders.
+*   **Through-Zero Doubletracker:** Side 2 features a fractional delay line (Lag Deck) that references a fixed permanent delay (Reference Deck). This allows the Lag Deck to cross the "zero" time barrier (-0.3ms to 3ms) for authentic studio tape flanging.
+*   **Fractal Brownian Motion (FBM) Drift:** Instead of using a standard sine wave LFO for chorus/flanging, this module uses 1D Perlin noise layered via FBM to recreate the chaotic mechanical wow, flutter, and capstan friction of physical tape machines.
+
+### The Controls
+
+**Footswitches**
+*   **Left Footswitch (FS1):** Engages Side 1 (Tape Saturation). Automatically comes on when the pedal is engaged. Can be turned off using the Left Footswitch.
+*   **Right Footswitch (FS2):** Engages Side 2 (Through-Zero Doubletracker). Currently, this also acts as the True Bypass. So technically, Double-Tracking is always on. Use the Blend knob, described below, to take doubletracking out of the signal.
+
+**Knobs**
+*   **Saturation - Pot1:** Controls the drive into the tape machine. Lower settings provide subtle analog warmth; higher settings compress and distort as the virtual magnetic tape saturates.
+*   **Tone - Pot2:** Low-Pass Filter, very warm to bright.
+*   **Level - Pot3:** Master output volume. Only on when Tape Saturation is engaged.
+*   **Lag Time - Pot4:** A custom-curved control for the Doubletracker. 
+    *   *0% to 50% (Flange):* Pushes the tape across the zero-crossing for massive, hollow comb-filtering.
+    *   *50% to 75% (Chorus):* Separates the tape decks enough to create a lush, widening chorus.
+    *   *75% to 100% (Slap/Echo):* Expands the delay time logarithmically up to 500ms for classic rockabilly slapback and tape echo.
+*   **Blend - Pot5:** Crossfades between the Reference Deck and the Lag Deck.
+*   **Wobble - Pot6:** Controls the mechanical health of the tape machine. At 0, the tape drifts with microscopic analog imperfection. Turning it up increases the depth and speed of the randomized wow and flutter.
+
+
+**Toggles**
+*   **Voice Toggle - TS1:** Switches between "Classic" (mastering-grade reel-to-reel saturation) and "Cassette" (squashed ALC compression).
+*   **Invert Toggle - TS2:** Flips the phase of the Lag Deck. Essential for getting infinitely deep cancellation notches when in the "Flange" zone of the Lag Time knob.
+
+---
 # Daisy Seed Projects
 This is a demo of a pedal board I put together using 3 of my custom Daisy Seed based guitar pedals. I designed and built the hardware and programmed the software. Everything shown here is open source and all the code, pcb files, and basic instructions on how to build the pedals, can be found on these pages.
 
