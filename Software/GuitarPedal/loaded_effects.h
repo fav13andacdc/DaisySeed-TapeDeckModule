@@ -8,35 +8,37 @@
 #include "Effect-Modules/base_effect_module.h"
 
 // Include all effect modules
-#include "Effect-Modules/autopan_module.h"
-#include "Effect-Modules/chopper_module.h"
-#include "Effect-Modules/chorus_module.h"
-#include "Effect-Modules/cloudseed_module.h" // Takes up significant SDRAM (about 30%)
-#include "Effect-Modules/compressor_module.h"
-#include "Effect-Modules/crusher_module.h"
-#include "Effect-Modules/delay_module.h"
-#include "Effect-Modules/distortion_module.h"
-#include "Effect-Modules/drum_module.h"
-#include "Effect-Modules/flanger_module.h"
-#include "Effect-Modules/geq_module.h"
-#include "Effect-Modules/granulardelay_module.h"
-#include "Effect-Modules/ir_module.h"
-#include "Effect-Modules/looper_module.h"
-#include "Effect-Modules/metro_module.h"
-#include "Effect-Modules/modulated_tremolo_module.h"
-#include "Effect-Modules/multi_delay_module.h"
-#include "Effect-Modules/nam_a2_module.h"
-#include "Effect-Modules/noise_gate_module.h"
-#include "Effect-Modules/overdrive_module.h"
-#include "Effect-Modules/peq_module.h"
-#include "Effect-Modules/phaser_module.h"
-#include "Effect-Modules/pitch_shifter_module.h"
-#include "Effect-Modules/polyoctave_module.h"
-#include "Effect-Modules/reverb_module.h"
-#include "Effect-Modules/scifi_module.h"
-#include "Effect-Modules/spectral_delay_module.h"
-#include "Effect-Modules/tape_delay_module.h"
-#include "Effect-Modules/tuner_module.h"
+//#include "Effect-Modules/autopan_module.h"
+//#include "Effect-Modules/chopper_module.h"
+//#include "Effect-Modules/chorus_module.h"
+//#include "Effect-Modules/cloudseed_module.h" // Takes up significant SDRAM (about 30%)
+//#include "Effect-Modules/compressor_module.h"
+//#include "Effect-Modules/crusher_module.h"
+//#include "Effect-Modules/delay_module.h"
+//#include "Effect-Modules/distortion_module.h"
+//#include "Effect-Modules/drum_module.h"
+//#include "Effect-Modules/flanger_module.h"
+//#include "Effect-Modules/geq_module.h"
+//#include "Effect-Modules/granulardelay_module.h"
+//#include "Effect-Modules/ir_module.h"
+//#include "Effect-Modules/looper_module.h"
+//#include "Effect-Modules/metro_module.h"
+//#include "Effect-Modules/modulated_tremolo_module.h"
+//#include "Effect-Modules/multi_delay_module.h"
+//#include "Effect-Modules/nam_a2_module.h"
+//#include "Effect-Modules/noise_gate_module.h"
+//#include "Effect-Modules/overdrive_module.h"
+//#include "Effect-Modules/peq_module.h"
+//#include "Effect-Modules/phaser_module.h"
+//#include "Effect-Modules/pitch_shifter_module.h"
+//#include "Effect-Modules/polyoctave_module.h"
+//#include "Effect-Modules/reverb_module.h"
+//#include "Effect-Modules/scifi_module.h"
+//#include "Effect-Modules/spectral_delay_module.h"
+//#include "Effect-Modules/tape_delay_module.h"
+//#include "Effect-Modules/tuner_module.h"
+//#include "Effect-Modules/combo_module.h"
+#include "Effect-Modules/tape_deck_module.h"
 
 // Keyboard modules
 // #include "Effect-Modules/fm_keys_module.h"
@@ -50,35 +52,8 @@ namespace bkshepherd {
 void load_effects(int &availableEffectsCount, BaseEffectModule **&availableEffects) {
     // clang-format off
     static BaseEffectModule* effectList[] = {
-        new ModulatedTremoloModule(),
-        new OverdriveModule(),
-        new AutoPanModule(),
-        new ChorusModule(),
-        new ChopperModule(),
-        new ReverbModule(),
-        new MultiDelayModule(),
-        new MetroModule(),
-        new TunerModule(),
-        new PitchShifterModule(),
-        new CompressorModule(),
-        new LooperModule(),
-        new GraphicEQModule(),
-        new ParametricEQModule(),
-        new NoiseGateModule(),
-        new CloudSeedModule(),
-        new DelayModule(),
-        new TapeDelayModule(),
-        new NamA2Module(),
-        new SciFiModule(),
-        new PolyOctaveModule(),
-        new SpectralDelayModule(),
-        new DistortionModule(),
-        new GranularDelayModule(),
-        new IrModule(),
-        new DrumModule(),  // This module can be used with MIDI keyboard as a drum machine
-        new PhaserModule(),
-        new FlangerModule(),
-        new CrusherModule(),
+
+        new TapeDeckModule(), // This module is a tape deck with a tone control and a voice switch
 
         // The following require a MIDI keyboard
         // new MidiKeysModule(),

@@ -26,39 +26,7 @@ C_SOURCES += $(CMSIS_DSP_SRC)
 # Naming the module sources explicitly to make it easier to add/remove from build. Otherwise all global attributes
 #  will be included in the build and take up memory resources, even when the .h file is commented out. 
 
-CPP_SOURCES += Effect-Modules/autopan_module.cpp
-CPP_SOURCES += Effect-Modules/Chopper/chopper.cpp
-CPP_SOURCES += Effect-Modules/chopper_module.cpp
-CPP_SOURCES += Effect-Modules/chorus_module.cpp
-CPP_SOURCES += Effect-Modules/cloudseed_module.cpp
-CPP_SOURCES += Effect-Modules/compressor_module.cpp
-CPP_SOURCES += Effect-Modules/crusher_module.cpp
-CPP_SOURCES += Effect-Modules/delay_module.cpp
-CPP_SOURCES += Effect-Modules/drum_module.cpp
-CPP_SOURCES += Effect-Modules/flanger_module.cpp
-CPP_SOURCES += Effect-Modules/geq_module.cpp
-CPP_SOURCES += Effect-Modules/granulardelay_module.cpp
-CPP_SOURCES += Effect-Modules/distortion_module.cpp
-CPP_SOURCES += Effect-Modules/ImpulseResponse/ImpulseResponse.cpp
-CPP_SOURCES += Effect-Modules/ImpulseResponse/ir_data.cpp
-CPP_SOURCES += Effect-Modules/ir_module.cpp
-CPP_SOURCES += Effect-Modules/looper_module.cpp
-CPP_SOURCES += Effect-Modules/metro_module.cpp
-CPP_SOURCES += Effect-Modules/modulated_tremolo_module.cpp
-CPP_SOURCES += Effect-Modules/multi_delay_module.cpp
-CPP_SOURCES += Effect-Modules/nam_a2_module.cpp
-CPP_SOURCES += Effect-Modules/noise_gate_module.cpp
-CPP_SOURCES += Effect-Modules/overdrive_module.cpp
-CPP_SOURCES += Effect-Modules/peq_module.cpp
-CPP_SOURCES += Effect-Modules/phaser_module.cpp
-CPP_SOURCES += Effect-Modules/pitch_shifter_module.cpp
-CPP_SOURCES += Effect-Modules/polyoctave_module.cpp
-CPP_SOURCES += Effect-Modules/reverb_module.cpp
-CPP_SOURCES += Effect-Modules/scifi_module.cpp
-CPP_SOURCES += Effect-Modules/scope_module.cpp
-CPP_SOURCES += Effect-Modules/spectral_delay_module.cpp
-CPP_SOURCES += Effect-Modules/tape_delay_module.cpp
-CPP_SOURCES += Effect-Modules/tuner_module.cpp
+CPP_SOURCES += Effect-Modules/tape_deck_module.cpp
 #CPP_SOURCES += Effect-Modules/reverb_delay_module.cpp
 
 # Keyboard oriented modules

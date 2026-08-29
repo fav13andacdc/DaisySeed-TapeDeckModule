@@ -44,6 +44,7 @@ struct ParameterMetaData {
     ParameterValue defaultValue;     // The Raw Default Value set for this parameter the first time the device is powered up
     int knobMapping;   // The ID of the Physical Knob mapped to this Parameter. -1 if this Parameter is not controlled by a Knob
     int midiCCMapping; // The Midi CC ID mapped to this Parameter. -1 of this Parameter is not controllable via Midi CC messages
+    int toggleMapping = -1;
     int minValue = 0;  // The minimum value of the parameter
     int maxValue = 1;  // The maximum value of the parameter
     float fineStepSize = 0.01f; // For Float Parameters, this will set the fineStepSize multiple in the menu
@@ -166,6 +167,7 @@ class BaseEffectModule {
      \param midiCC_id Id of the MidiCC to retrieve.
      \return the Parameter ID mapped to the specified MidiCC, or -1 if no Parameter is Mapped to that Midi CC
     */
+   virtual int GetMappedParameterIDForToggle(int toggle_id) const;
     int GetMappedParameterIDForMidiCC(int midiCC_id) const;
 
     /** Sets the note and velocity of a midi key pressed event.

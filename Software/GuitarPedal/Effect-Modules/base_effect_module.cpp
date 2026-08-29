@@ -194,7 +194,16 @@ int BaseEffectModule::GetMappedParameterIDForKnob(int knob_id) const {
 
     return -1;
 }
-
+int BaseEffectModule::GetMappedParameterIDForToggle(int toggle_id) const {
+    if (m_paramMetaData != nullptr) {
+        for (int i = 0; i < m_paramCount; i++) {
+            if (m_paramMetaData[i].toggleMapping == toggle_id) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
 int BaseEffectModule::GetMappedParameterIDForMidiCC(int midiCC_id) const {
     if (m_paramMetaData != nullptr) {
         for (int i = 0; i < m_paramCount; i++) {

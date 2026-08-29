@@ -16,7 +16,7 @@ using namespace bkshepherd;
 // #define VARIANT_125B
 // #define VARIANT_1590B
 // #define VARIANT_1590B_SMD
-// #define VARIANT_TERRARIUM
+#define VARIANT_TERRARIUM
 // #define VARIANT_FUNBOX
 
 // Store the hardware in SRAM to save DTCMRAM for the dynamic
@@ -391,7 +391,29 @@ static void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer
                 isCrossFading = false;
             }
         }
+// --- NEW GLOBAL TOGGLE LOGIC ---
+        for (int i = 0; i < hardware.GetSwitchCount(); i++) {
+            // Check if the active effect has a parameter mapped to this specific switch
+            int parameterID = activeEffect->GetMappedParameterIDForToggle(i);
 
+            if (parameterID != -1) {
+                bool isDown = hardware.switches[i].Pressed();
+                ParameterValueType paramType = activeEffect->GetParameterType(parameterID);
+
+                // If it's a Binned parameter (like our Voice toggle), route DOWN to Bin 2, UP to Bin 1
+                if (paramType == ParameterValueType::Binned) {
+                    activeEffect->SetParameterAsBinnedValue(parameterID, isDown ? 2 : 1);
+                } 
+                // If it's a simple Bool parameter, just pass the True/False state
+                else if (paramType == ParameterValueType::Bool) {
+                    activeEffect->SetParameterAsBool(parameterID, isDown);
+                }
+                
+                // Update the UI if a screen is attached
+                guitarPedalUI.UpdateActiveEffectParameterValue(parameterID, true);
+            }
+        }
+        // -------------------------------
         // Handle Timing for the Hardware Mute and Relay Bypass
         if (muteOn) {
             // Decrement the Sample Counts for the timing of the mute and bypass
@@ -631,7 +653,7 @@ int main(void) {
 
     // Setup Relay Bypass State
     if (hardware.SupportsTrueBypass() && settings.globalRelayBypassEnabled) {
-        bypassOn = true;
+        bypassOn = false;
     }
 
     // Init the Knob Monitoring System

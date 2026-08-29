@@ -30,7 +30,8 @@
       "includePath": [
         "${workspaceFolder}/**",
         "${workspaceFolder}/dependencies/libDaisy/**",
-        "${workspaceFolder}/dependencies/DaisySP/**"
+        "${workspaceFolder}/dependencies/DaisySP/**",
+        "${workspaceFolder}/dependencies/DaisySP/DaisySP-LGPL/Source/**"
       ],
       "name": "macOS",
       "configurationProvider": "ms-vscode.makefile-tools"
