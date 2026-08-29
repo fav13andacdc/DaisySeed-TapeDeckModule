@@ -3,9 +3,9 @@
 **This fork transforms the Terrarium into a dual-sided tape emulator, featuring mastering-grade analog saturation on Side 1 and a mechanical through-zero flanger/chorus/echo on Side 2.**
 
 ### What This Is
-This is a custom firmware build for the PedalPCB Terrarium (Daisy Seed), originally based on bkshepherd's Multi-Effect Guitar Pedal framework. It overrides the standard multi-effect list to boot directly into a bespoke `TapeDeckModule`. It also detaches the global hardware bypass relay, allowing both physical footswitches to operate completely independently to toggle the two halves of the effect.
+This is a custom firmware build for the PedalPCB Terrarium (Daisy Seed), originally based on bkshepherd's Multi-Effect Guitar Pedal framework. It overrides the standard multi-effect list to boot directly into a bespoke `TapeDeckModule`.
 
-### Under the Hood (The Changes Made)
+### Under the Hood
 *   **Jiles-Atherton Hysteresis:** Side 1 replaces standard clipping with a discrete-time approximation of the Jiles-Atherton magnetisation model, creating authentic, frequency-dependent analog tape warmth and compression.
 *   **Auto Level Control (ALC):** A secondary "Cassette" voice routes the signal through a fast-attack/slow-release compressor before hitting the saturation block to simulate cheap, highly squashed cassette recorders.
 *   **Through-Zero Doubletracker:** Side 2 features a fractional delay line (Lag Deck) that references a fixed permanent delay (Reference Deck). This allows the Lag Deck to cross the "zero" time barrier (-0.3ms to 3ms) for authentic studio tape flanging.
