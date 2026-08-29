@@ -30,8 +30,8 @@ This is a custom firmware build for the PedalPCB Terrarium (Daisy Seed), origina
 
 
 **Toggles**
-*   **Voice Toggle - TS1:** Switches between "Classic" (mastering-grade reel-to-reel saturation) and "Cassette" (squashed ALC compression).
-*   **Invert Toggle - TS2:** Flips the phase of the Lag Deck. Essential for getting infinitely deep cancellation notches when in the "Flange" zone of the Lag Time knob.
+*   **Invert Toggle - TS1:** Flips the phase of the Lag Deck. Essential for getting infinitely deep cancellation notches when in the "Flange" zone of the Lag Time knob.
+*   **Voice Toggle - TS2:** Switches between "Classic" (mastering-grade reel-to-reel saturation) and "Cassette" (squashed ALC compression).
 
 ---
 # Daisy Seed Projects
