@@ -37,20 +37,34 @@ class TapeDeckModule : public BaseEffectModule {
     float GetBrightnessForLED(int led_id) const override;
     void SetEnabled(bool isEnabled) override;
     void AlternateFootswitchPressed() override;
+    bool IsEitherModuleEnabled() const {
+    return m_satEnabled || m_dtEnabled || m_satMix > 0.0f || m_dtMix > 0.0f;
+}
 
-   private:
-    bool m_dtEnabled = true;
-    bool m_satEnabled = true;
-    daisysp::Tone m_toneFilterL;
-    daisysp::Tone m_toneFilterR;
+private:
+    bool m_dtEnabled = false;
+    bool m_satEnabled = false;
+    float m_satMix = 0.0f;
+    float m_dtMix = 0.0f;
+    float m_fadeStep = 0.0014f;
+
+    // Klon-style Active High-Shelf Tone Filter
+    float m_toneLpStateL = 0.0f;
+    float m_toneLpStateR = 0.0f;
+    float m_toneAlpha = 0.2f;
+    float m_toneHighGain = 1.0f;
+
+    // Cassette ALC Compressors
     daisysp::Compressor m_alcCompressorL;
     daisysp::Compressor m_alcCompressorR;
+
     float m_currentLagSamples = 0.0f;
 
     // Hysteresis State Variables
     float m_M_n1_L = 0.0f;
     float m_M_n1_R = 0.0f;
-TapeModulator m_tapeMod;
+    TapeModulator m_tapeMod;
+
     // Langevin function approximation
     float Langevin(float x);
     // Core Hysteresis Processing

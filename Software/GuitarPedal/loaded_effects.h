@@ -53,7 +53,7 @@ void load_effects(int &availableEffectsCount, BaseEffectModule **&availableEffec
     // clang-format off
     static BaseEffectModule* effectList[] = {
 
-        new TapeDeckModule(), // This module is a tape deck with a tone control and a voice switch
+        new TapeDeckModule(),
 
         // The following require a MIDI keyboard
         // new MidiKeysModule(),

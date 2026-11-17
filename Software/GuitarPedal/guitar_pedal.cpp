@@ -1,6 +1,7 @@
 #include "daisysp.h"
 #include "guitar_pedal_storage.h"
 #include "loaded_effects.h"
+#include "Effect-Modules/tape_deck_module.h"
 #include <string.h>
 
 #include "UI/guitar_pedal_ui.h"
@@ -288,7 +289,7 @@ static void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer
             effectOn = !effectOn;
         }
 
-        if (effectOn && switchPressed && i == hardware.GetPreferredSwitchIDForSpecialFunctionType(SpecialFunctionType::Alternate)) {
+        if (switchPressed && i == hardware.GetPreferredSwitchIDForSpecialFunctionType(SpecialFunctionType::Alternate)) {
             activeEffect->AlternateFootswitchPressed();
         }
 
@@ -391,13 +392,14 @@ static void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer
                 isCrossFading = false;
             }
         }
-// --- NEW GLOBAL TOGGLE LOGIC ---
-        for (int i = 0; i < hardware.GetSwitchCount(); i++) {
+
+        // --- NEW GLOBAL TOGGLE LOGIC ---
+        for (int s = 0; s < hardware.GetSwitchCount(); s++) {
             // Check if the active effect has a parameter mapped to this specific switch
-            int parameterID = activeEffect->GetMappedParameterIDForToggle(i);
+            int parameterID = activeEffect->GetMappedParameterIDForToggle(s);
 
             if (parameterID != -1) {
-                bool isDown = hardware.switches[i].Pressed();
+                bool isDown = hardware.switches[s].Pressed();
                 ParameterValueType paramType = activeEffect->GetParameterType(parameterID);
 
                 // If it's a Binned parameter (like our Voice toggle), route DOWN to Bin 2, UP to Bin 1
@@ -414,6 +416,7 @@ static void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer
             }
         }
         // -------------------------------
+
         // Handle Timing for the Hardware Mute and Relay Bypass
         if (muteOn) {
             // Decrement the Sample Counts for the timing of the mute and bypass
@@ -443,14 +446,14 @@ static void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer
         // Setup Master Crossfader. By default source & target is always the input signal
         float crossFadeSourceLeft = inputLeft;
         float crossFadeSourceRight = inputRight;
-        float crossFadeTargetLeft = inputLeft;
-        float crossFadeTargetRight = inputRight;
         float effectOutputLeft = inputLeft;
         float effectOutputRight = inputRight;
 
+        bool isTapeDeck = (activeEffect != nullptr && std::strcmp(activeEffect->GetName(), "Tape Deck") == 0);
+        bool subModuleActive = isTapeDeck && static_cast<TapeDeckModule *>(activeEffect)->IsEitherModuleEnabled();
+
         // Only calculate the active effect when it's needed
-        if (activeEffect != nullptr && (effectOn || isCrossFading)) {
-            // Apply the Active Effect
+        if (activeEffect != nullptr && (effectOn || isCrossFading || subModuleActive)) {
             if (hardware.SupportsStereo()) {
                 activeEffect->ProcessStereo(inputLeft, inputRight);
             } else {
@@ -460,17 +463,18 @@ static void AudioCallback(AudioHandle::InputBuffer in, AudioHandle::OutputBuffer
             effectOutputLeft = activeEffect->GetAudioLeft();
             effectOutputRight = activeEffect->GetAudioRight();
 
-            // Update state of the LEDs
             led1Brightness = activeEffect->GetBrightnessForLED(0);
             led2Brightness = activeEffect->GetBrightnessForLED(1);
         }
 
-        // Setup the crossfade target to be the effect
-        crossFadeTargetLeft = effectOutputLeft;
-        crossFadeTargetRight = effectOutputRight;
-
-        out[0][i] = crossFaderLeft.Process(crossFadeSourceLeft, crossFadeTargetLeft);
-        out[1][i] = crossFaderRight.Process(crossFadeSourceRight, crossFadeTargetRight);
+        if (isTapeDeck) {
+            // TapeDeckModule handles its own 15ms click-free crossfades internally
+            out[0][i] = effectOutputLeft;
+            out[1][i] = effectOutputRight;
+        } else {
+            out[0][i] = crossFaderLeft.Process(crossFadeSourceLeft, effectOutputLeft);
+            out[1][i] = crossFaderRight.Process(crossFadeSourceRight, effectOutputRight);
+        }
     }
 
     // Override LEDs if we are saving the current settings
@@ -653,7 +657,7 @@ int main(void) {
 
     // Setup Relay Bypass State
     if (hardware.SupportsTrueBypass() && settings.globalRelayBypassEnabled) {
-        bypassOn = false;
+        bypassOn = true;
     }
 
     // Init the Knob Monitoring System

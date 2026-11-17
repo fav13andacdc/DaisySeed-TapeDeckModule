@@ -95,10 +95,10 @@ TapeDeckModule::~TapeDeckModule() {}
 
 void TapeDeckModule::Init(float sample_rate) {
     BaseEffectModule::Init(sample_rate);
-    
-    m_toneFilterL.Init(sample_rate);
-    m_toneFilterR.Init(sample_rate);
-    
+
+    m_toneLpStateL = 0.0f;
+    m_toneLpStateR = 0.0f;
+
     // Initialize Cassette ALC (Auto Level Control) using a fast attack/slow release compressor
     m_alcCompressorL.Init(sample_rate);
     m_alcCompressorL.SetThreshold(-20.0f);
@@ -111,19 +111,35 @@ void TapeDeckModule::Init(float sample_rate) {
     m_alcCompressorR.SetRatio(4.0f);
     m_alcCompressorR.SetAttack(0.01f);
     m_alcCompressorR.SetRelease(0.5f);
-    m_tapeMod.Init(sample_rate); //[cite: 9]
+
+    m_tapeMod.Init(sample_rate);
     dt_lagDeckL.Init();
     dt_lagDeckR.Init();
     dt_refDeckL.Init();
     dt_refDeckR.Init();
+    m_currentLagSamples = 2.0f * (sample_rate / 1000.0f);
+    m_fadeStep = 1.0f / (0.015f * sample_rate);
+
+    // Compute initial tone filter coefficients for the default knob position
+    ParameterChanged(TONE);
 }
 
 void TapeDeckModule::ParameterChanged(int parameter_id) {
     if (parameter_id == TONE) {
-        // Map tone 0.0 - 1.0 to 500Hz - 15000Hz
-        float cutoff = 500.0f + (14700.0f * GetParameterAsFloat(TONE));
-        m_toneFilterL.SetFreq(cutoff);
-        m_toneFilterR.SetFreq(cutoff);
+        float tone = GetParameterAsFloat(TONE); // 0.0 to 1.0
+        float sampleRate = GetSampleRate();
+        if (sampleRate <= 0.0f) sampleRate = 48000.0f;
+
+        // Klon-style shelf corner frequency (~1.2 kHz)
+        float cutoffFreq = 1200.0f;
+        m_toneAlpha = 1.0f - std::exp(-2.0f * 3.14159265f * cutoffFreq / sampleRate);
+
+        // Map 0.0..0.5 -> -12dB..0dB cut, and 0.5..1.0 -> 0dB..+14dB active boost
+        float gainDb = (tone < 0.5f)
+            ? ((tone - 0.5f) * 24.0f)   // -12 dB at 0.0, 0 dB at 0.5
+            : ((tone - 0.5f) * 28.0f);  // 0 dB at 0.5, +14 dB at 1.0
+
+        m_toneHighGain = std::pow(10.0f, gainDb / 20.0f);
     }
 }
 // Footswitch 1 (Bypass) controls the Doubletracker
@@ -166,31 +182,57 @@ float TapeDeckModule::ProcessHysteresis(float in, float& M_state) {
 void TapeDeckModule::ProcessMono(float in) {
     BaseEffectModule::ProcessMono(in);
     float signal = in;
-    
-    // --- 1. TAPE SATURATION ---
-    if (m_satEnabled) {
-        float drive = 1.0f + (GetParameterAsFloat(DRIVE) * 10.0f);
-        float volume = GetParameterAsFloat(VOLUME) * 2.0f;
-        int voice = GetParameterAsBinnedValue(VOICE) - 1; 
 
-        signal = signal * drive;
-
-        if (voice == 0) {
-            signal = ProcessHysteresis(signal, m_M_n1_L);
-        } else {
-            signal = m_alcCompressorL.Process(signal);
-            signal = std::tanh(signal);
-        }
-    signal = m_toneFilterL.Process(signal);
-        signal = signal * volume;
+    // --- 1. SMOOTH SATURATION RAMP & DSP ---
+    float satTarget = m_satEnabled ? 1.0f : 0.0f;
+    if (m_satMix < satTarget) {
+        m_satMix = std::min(satTarget, m_satMix + m_fadeStep);
+    } else if (m_satMix > satTarget) {
+        m_satMix = std::max(satTarget, m_satMix - m_fadeStep);
     }
 
-    // --- 2. DOUBLETRACKER ---
-    if (m_dtEnabled) {
-        dt_refDeckL.Write(signal);
-        dt_lagDeckL.Write(signal);
+    if (m_satMix > 0.0f) {
+        float drySat = signal;
+        float drive = 1.0f + (GetParameterAsFloat(DRIVE) * 10.0f);
+        float volume = GetParameterAsFloat(VOLUME) * 2.0f;
+        int voice = GetParameterAsBinnedValue(VOICE) - 1;
 
-// 1. Piecewise Lag Time mapping (Linear -0.3 to 3.0, Logarithmic 3.0 to 500)
+        float wetSat = drySat * drive;
+
+        if (voice == 0) {
+            wetSat = ProcessHysteresis(wetSat, m_M_n1_L);
+        } else {
+            wetSat = m_alcCompressorL.Process(wetSat);
+            wetSat = std::tanh(wetSat);
+        }
+       // Active High-Shelf EQ: split signal into lows + highs, then scale highs
+        m_toneLpStateL += m_toneAlpha * (wetSat - m_toneLpStateL);
+        float lowBand = m_toneLpStateL;
+        float highBand = wetSat - lowBand;
+        wetSat = lowBand + (highBand * m_toneHighGain);
+
+        wetSat = wetSat * volume;
+
+        // Smooth 15ms crossfade prevents any click when toggling FS1
+        signal = drySat + (m_satMix * (wetSat - drySat));
+    }
+
+    // --- 2. CONTINUOUS DELAY BUFFERING & DOUBLETRACKER ---
+    // Always write live audio into the delay lines so they never contain stale/zeroed audio on engage
+    dt_refDeckL.Write(signal);
+    dt_lagDeckL.Write(signal);
+
+    float dtTarget = m_dtEnabled ? 1.0f : 0.0f;
+    if (m_dtMix < dtTarget) {
+        m_dtMix = std::min(dtTarget, m_dtMix + m_fadeStep);
+    } else if (m_dtMix > dtTarget) {
+        m_dtMix = std::max(dtTarget, m_dtMix - m_fadeStep);
+    }
+
+    if (m_dtMix > 0.0f) {
+        float preDtSignal = signal;
+
+        // 1. Piecewise Lag Time mapping (Linear -0.3 to 3.0, Logarithmic 3.0 to 500)
         float lagKnob = GetParameterAsFloat(LAG_TIME);
         float lagTimeMs = 0.0f;
         
@@ -204,32 +246,22 @@ void TapeDeckModule::ProcessMono(float in) {
 
         // 2. Absolute Wobble Math
         float wobbleKnob = GetParameterAsFloat(WOBBLE);
-        
-        // BASELINE: Always sweep by at least 1.5ms to guarantee built-in flange/chorus.
-        // WOBBLE KNOB: Adds up to 10ms of extra, pronounced depth.
         float sweepDepthMs = 1.5f + (powf(wobbleKnob, 2.0f) * 10.0f); 
         
-        // Modulator rates increase slightly as you turn the knob
         float wowRate = 0.5f + (wobbleKnob * 2.0f);
         float flutterRate = 2.0f + (wobbleKnob * 5.0f);
-        
-        // Get the normalized [-1.0 to 1.0] tape speed variation from FBM
         float speedVariation = m_tapeMod.GetTapeSpeed(wowRate, flutterRate, 1.0f, 0.5f);
 
-        // 3. Convert everything to samples and apply
+        // 3. Convert to samples and apply
         float sampleRate = GetSampleRate();
-        float refSamples = 2.0f * (sampleRate / 1000.0f); // 2ms fixed reference
+        float refSamples = 2.0f * (sampleRate / 1000.0f);
         float baseLagSamples = refSamples + (lagTimeMs * (sampleRate / 1000.0f));
         float sweepSamples = sweepDepthMs * (sampleRate / 1000.0f);
 
-        // Apply the absolute sweep to the base lag
         float modulatedLagSamples = baseLagSamples + (speedVariation * sweepSamples);
-
-        // Clamp to prevent out-of-bounds array reads
         if (modulatedLagSamples < 1.0f) modulatedLagSamples = 1.0f;
         if (modulatedLagSamples > 47999.0f) modulatedLagSamples = 47999.0f;
 
-        // GLIDE the delay time to the new target to prevent DSP crashing and clicking
         daisysp::fonepole(m_currentLagSamples, modulatedLagSamples, 0.0002f);
 
         // 4. Read from the decks
@@ -241,16 +273,21 @@ void TapeDeckModule::ProcessMono(float in) {
 
         // Sum/Invert Toggle
         if (GetParameterAsBinnedValue(DT_TOGGLE) - 1 == 1) { 
-            wetLag = -wetLag; // Phase flip
+            wetLag = -wetLag;
         }
 
-        // Linear Blend
+        // Equal-power crossfade for unity gain
         float blend = GetParameterAsFloat(BLEND);
-        signal = (dryRef * (1.0f - blend)) + (wetLag * blend);
+        float dryGain = std::cos(blend * 1.5707963f);
+        float wetGain = std::sin(blend * 1.5707963f);
+        float wetDt = (dryRef * dryGain) + (wetLag * wetGain);
+
+        // Smooth 15ms crossfade prevents any click when toggling FS2
+        signal = preDtSignal + (m_dtMix * (wetDt - preDtSignal));
     }
 
     m_audioLeft = signal;
-    m_audioRight = signal; // Dual-mono output
+    m_audioRight = signal;
 }
 
 void TapeDeckModule::ProcessStereo(float inL, float inR) {
@@ -260,7 +297,7 @@ void TapeDeckModule::ProcessStereo(float inL, float inR) {
 }
 
 float TapeDeckModule::GetBrightnessForLED(int led_id) const {
-    if (led_id == 0) return m_dtEnabled ? 1.0f : 0.0f;
-    if (led_id == 1) return m_satEnabled ? 1.0f : 0.0f;
+    if (led_id == 0) return m_dtEnabled ? 1.0f : 0.0f;  // Right LED -> FS2 (Doubletracker)
+    if (led_id == 1) return m_satEnabled ? 1.0f : 0.0f; // Left LED -> FS1 (Saturation)
     return BaseEffectModule::GetBrightnessForLED(led_id);
 }

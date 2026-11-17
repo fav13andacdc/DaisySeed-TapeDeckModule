@@ -28,6 +28,8 @@ C_SOURCES += $(CMSIS_DSP_SRC)
 
 CPP_SOURCES += Effect-Modules/tape_deck_module.cpp
 #CPP_SOURCES += Effect-Modules/reverb_delay_module.cpp
+#CPP_SOURCES += Effect-Modules/polyoctave_module.cpp
+
 
 # Keyboard oriented modules
 #CPP_SOURCES += Effect-Modules/fm_keys_module.cpp
@@ -89,7 +91,7 @@ endif
 # Get compiler version string safely
 GCC_VERSION := $(shell arm-none-eabi-gcc -dumpversion)
 GCC_VERSION_MAJOR := $(word 1, $(subst ., ,$(GCC_VERSION)))
-GCC_VERSION_MAJOR_REQUIRED := 10
+GCC_VERSION_MAJOR_REQUIRED := 15
 
 ifneq ($(GCC_VERSION_MAJOR),$(GCC_VERSION_MAJOR_REQUIRED))
 $(error Compiler version of arm-none-eabi-gcc: $(GCC_VERSION) is not supported. Use version $(GCC_VERSION_MAJOR_REQUIRED).x.x)
